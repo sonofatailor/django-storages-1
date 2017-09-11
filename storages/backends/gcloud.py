@@ -1,4 +1,5 @@
 import mimetypes
+import logging
 from tempfile import SpooledTemporaryFile
 
 from django.core.exceptions import ImproperlyConfigured
@@ -7,7 +8,6 @@ from django.core.files.storage import Storage
 from django.utils import timezone
 from django.utils.deconstruct import deconstructible
 from django.utils.encoding import force_bytes, smart_str
-
 from storages.utils import clean_name, safe_join, setting
 
 try:
@@ -17,6 +17,9 @@ try:
 except ImportError:
     raise ImproperlyConfigured("Could not load Google Cloud Storage bindings.\n"
                                "See https://github.com/GoogleCloudPlatform/gcloud-python")
+
+
+logger = logging.getLogger()
 
 
 class GoogleCloudFile(File):
@@ -162,7 +165,10 @@ class GoogleCloudStorage(Storage):
 
     def delete(self, name):
         name = self._normalize_name(clean_name(name))
-        self.bucket.delete_blob(self._encode_name(name))
+        try:
+            self.bucket.delete_blob(self._encode_name(name))
+        except Exception as e:
+            logger.warning("File %s did not exist in bucket %s" % (name, self.bucker.name))
 
     def exists(self, name):
         if not name:  # root element aka the bucket
@@ -226,7 +232,11 @@ class GoogleCloudStorage(Storage):
     def url(self, name):
         # Preserve the trailing slash after normalizing the path.
         name = self._normalize_name(clean_name(name))
-        blob = self._get_blob(self._encode_name(name))
+        try:
+            blob = self._get_blob(self._encode_name(name))
+        except Exception as e:
+            logger.warning(u'File does not exist: {}'.format(name))
+            return "/notfound"
         return blob.public_url
 
     def get_available_name(self, name, max_length=None):
