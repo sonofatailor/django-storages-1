@@ -168,7 +168,7 @@ class GoogleCloudStorage(Storage):
         try:
             self.bucket.delete_blob(self._encode_name(name))
         except Exception as e:
-            logger.warning("File %s did not exist in bucket %s" % (name, self.bucker.name))
+            logger.warning("File %s did not exist in bucket %s" % (name, self.bucket_name))
 
     def exists(self, name):
         if not name:  # root element aka the bucket
