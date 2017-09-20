@@ -179,7 +179,13 @@ class GoogleCloudStorage(Storage):
                 return False
 
         name = self._normalize_name(clean_name(name))
-        return bool(self.bucket.get_blob(self._encode_name(name)))
+        
+        if self._encode_name(name)) in self.bucket:
+            return True
+        
+        return False
+        
+        #return bool(self.bucket.get_blob(self._encode_name(name)))
 
     def listdir(self, name):
         name = self._normalize_name(clean_name(name))
